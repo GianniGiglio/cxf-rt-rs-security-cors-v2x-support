@@ -34,7 +34,6 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-import org.apache.cxf.common.util.ReflectionUtil;
 import org.apache.cxf.jaxrs.JAXRSServiceImpl;
 import org.apache.cxf.jaxrs.ext.RequestHandler;
 import org.apache.cxf.jaxrs.ext.ResponseHandler;
@@ -88,14 +87,31 @@ public class CrossOriginResourceSharingFilter implements RequestHandler, Respons
     private Integer maxAge;
     private Integer preflightFailStatus = 200;
     private boolean defaultOptionsMethodsHandlePreflight;
-    
-    
+
+
+    /**
+     * Look for a specified annotation on a method. If there, return it. If not, search it's containing class.
+     * Assume that the annotation is marked @Inherited.
+     * 
+     * @param m method to examine
+     * @param annotationType the annotation type to look for.
+     */
+    public static <T extends Annotation> T getAnnotationForMethodOrContainingClass(Method m,
+                                                                                   Class<T> annotationType) {
+        T annotation = m.getAnnotation(annotationType);
+        if (annotation != null) {
+            return annotation;
+        }
+        return m.getDeclaringClass().getAnnotation(annotationType);
+    }
+
     private <T extends Annotation> T  getAnnotation(Method m,
                                                     Class<T> annClass) {
         if (m == null) {
             return null;
         }
-        return ReflectionUtil.getAnnotationForMethodOrContainingClass(
+        // Removed using ReflectionUtil and replaced by local implementation (see above)
+        return getAnnotationForMethodOrContainingClass(
              m,  annClass);
     }
 
